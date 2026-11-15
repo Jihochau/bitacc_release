@@ -245,4 +245,13 @@ Notes on the methodology:
 - `config/`: model and hardware configuration.
 - `ramulator2/`: BitAcc-enabled Ramulator2 implementation.
 
-Ramulator2 retains its upstream MIT license in `ramulator2/LICENSE`.
+## License and attribution
+
+BitAcc is released under the MIT license (`LICENSE`).
+
+`ramulator2/` is a modified copy of Ramulator 2.0 (Luo et al., IEEE CAL 2023,
+github.com/CMU-SAFARI/ramulator2), which retains its upstream MIT license in
+`ramulator2/LICENSE`. Its processing-in-memory extensions (the PIM memory
+system, controller, scheduler, and trace frontend) are adapted from the AttAcc
+simulator (Park et al., ASPLOS 2024, github.com/scale-snu/attacc_simulator),
+whose MIT license is retained in `ramulator2/LICENSE.AttAcc`.
