@@ -1,0 +1,30 @@
+{
+  "_note": "Constants of the energy model in scripts/experiments/energy.py that are not simulator inputs. The per-event energy coefficients of the DRAM array, the transfers, the PE operations and the DIMM-level buffers are the *_pj_per_* keys of config/pim/bitacc_runtime_default.json.",
+  "host": {
+    "active_power_w": 65,
+    "idle_power_w": 10,
+    "idle_power_sensitivity_w": [0, 10, 20],
+    "source": "Assumed host power: 65 W while the host executes its own operations (embedding, LM head, sampling) and 10 W while it waits for the DIMM; 0 W and 20 W bound the idle power in the sensitivity study. These are assumptions of the paper (Section 6, Energy), not measurements."
+  },
+  "pe_leakage": {
+    "bank_pe_w": 11.3384e-6,
+    "dimm_pe_w": 2.7246e-6,
+    "dimm_buffers_w": 0.289324972375691e-3,
+    "source": "bank_pe_w, dimm_pe_w: leakage power of one bank-level PE and of the DIMM-level PE logic, Synopsys Design Compiler pre-layout synthesis with the ASAP7 7-nm RVT TT library (paper Table 'Area and power'). dimm_buffers_w: leakage of the 6+2+2 KiB DIMM-level buffers, CACTI organization model scaled to 7 nm with published FinCACTI ratios (same table)."
+  },
+  "ddr5_device": {
+    "vdd_v": 1.1,
+    "vpp_v": 1.8,
+    "vddq_v": 1.1,
+    "idd2n_ma": 49,
+    "ipp2n_ma": 7,
+    "iddq2n_ma": 73,
+    "idd3n_ma": 91,
+    "ipp3n_ma": 8,
+    "iddq3n_ma": 70,
+    "idd5b_ma": 377,
+    "ipp5b_ma": 33,
+    "iddq5b_ma": 76,
+    "source": "Maximum supply currents of one Micron 16-Gb DDR5 SDRAM die revision D, x8, DDR5-5600 speed grade (data sheet current specifications: precharge standby IDD2N/IPP2N/IDDQ2N, active standby IDD3N/IPP3N/IDDQ3N, all-bank refresh IDD5B/IPP5B/IDDQ5B). The same device is used for every model configuration, although the simulated organizations are 8-Gb to 32-Gb DDR5-3200 devices."
+  }
+}

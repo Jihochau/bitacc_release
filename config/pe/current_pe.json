@@ -1,0 +1,13 @@
+{
+  "_note": "V14 fixed Bank PE: one 128-bit array access processes 32 LUT pairs (64 activation elements) per logical LUT group.",
+  "banks": 32,
+  "n_tile": 1,
+  "pairs_per_rd": 32,
+  "tok_par": 2,
+  "tq_par": 2,
+  "tp_par": 2,
+  "qkt_dot_par": 8,
+  "pv_dim_par": 8,
+  "wio": 128,
+  "max_kv_cache_tokens": 1024
+}

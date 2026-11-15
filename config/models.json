@@ -1,0 +1,119 @@
+{
+  "BITNET-125M": {
+    "parameter_count": 125000000,
+    "n_layers": 11,
+    "hidden_size": 768,
+    "num_heads": 12,
+    "head_dim": 64,
+    "ffn_size": 3072,
+    "vocab_size": 32000
+  },
+  "BITNET-350M": {
+    "parameter_count": 350000000,
+    "n_layers": 24,
+    "hidden_size": 1024,
+    "num_heads": 16,
+    "head_dim": 64,
+    "ffn_size": 3072,
+    "vocab_size": 32000
+  },
+  "BITNET-700M": {
+    "parameter_count": 700000000,
+    "n_layers": 24,
+    "hidden_size": 1536,
+    "num_heads": 16,
+    "head_dim": 96,
+    "ffn_size": 4096,
+    "vocab_size": 32000
+  },
+  "BITNET-1B": {
+    "parameter_count": 1000000000,
+    "n_layers": 24,
+    "hidden_size": 2048,
+    "num_heads": 32,
+    "head_dim": 64,
+    "ffn_size": 3584,
+    "vocab_size": 32000
+  },
+  "BITNET-1.5B": {
+    "parameter_count": 1500000000,
+    "n_layers": 28,
+    "hidden_size": 1536,
+    "num_heads": 32,
+    "head_dim": 48,
+    "ffn_size": 9216,
+    "vocab_size": 32000
+  },
+  "BITNET-2.5B": {
+    "parameter_count": 2500000000,
+    "n_layers": 30,
+    "hidden_size": 2560,
+    "num_heads": 20,
+    "head_dim": 128,
+    "ffn_size": 6912,
+    "vocab_size": 32000
+  },
+  "BITNET-B1.58-2B-4T": {
+    "parameter_count": 2000000000,
+    "n_layers": 30,
+    "hidden_size": 2560,
+    "num_heads": 20,
+    "head_dim": 128,
+    "ffn_size": 6912,
+    "vocab_size": 128256
+  },
+  "BITNET-3.8B": {
+    "parameter_count": 3800000000,
+    "n_layers": 24,
+    "hidden_size": 3840,
+    "num_heads": 32,
+    "head_dim": 120,
+    "ffn_size": 8192,
+    "vocab_size": 32000
+  },
+  "BITNET-7B": {
+    "parameter_count": 7000000000,
+    "n_layers": 32,
+    "hidden_size": 4096,
+    "num_heads": 32,
+    "head_dim": 128,
+    "ffn_size": 12032,
+    "vocab_size": 32000
+  },
+  "BITNET-13B": {
+    "parameter_count": 13000000000,
+    "n_layers": 40,
+    "hidden_size": 5120,
+    "num_heads": 40,
+    "head_dim": 128,
+    "ffn_size": 13824,
+    "vocab_size": 32000
+  },
+  "BITNET-30B": {
+    "parameter_count": 30000000000,
+    "n_layers": 60,
+    "hidden_size": 6656,
+    "num_heads": 52,
+    "head_dim": 128,
+    "ffn_size": 16384,
+    "vocab_size": 32000
+  },
+  "BITNET-70B": {
+    "parameter_count": 70000000000,
+    "n_layers": 80,
+    "hidden_size": 8192,
+    "num_heads": 64,
+    "head_dim": 128,
+    "ffn_size": 24576,
+    "vocab_size": 32000
+  },
+  "BITNET-100B": {
+    "parameter_count": 100000000000,
+    "n_layers": 72,
+    "hidden_size": 8192,
+    "num_heads": 64,
+    "head_dim": 128,
+    "ffn_size": 45568,
+    "vocab_size": 32000
+  }
+}

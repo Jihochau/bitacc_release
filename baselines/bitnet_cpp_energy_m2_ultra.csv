@@ -1,0 +1,4 @@
+model,j_per_token,source
+700M,0.140,"arXiv:2410.16144, Table 6, APPLE M2, bitnet.cpp"
+7B,1.068,"arXiv:2410.16144, Table 6, APPLE M2, bitnet.cpp"
+70B,8.42,"arXiv:2410.16144, Table 6, APPLE M2, bitnet.cpp"

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+ramulator2/build/
+results/
+figures/
+result/
+.venv/

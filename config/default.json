@@ -1,0 +1,45 @@
+{
+  "run": {
+    "model": "BITNET-125M",
+    "lin": 1024,
+    "lout": 1,
+    "batch": 1
+  },
+  "hardware": {
+    "clock_hz": 1600000000,
+    "host_clock_hz": 3200000000,
+    "num_banks": 32,
+    "n_channels_per_bank": 1,
+    "k_tile": 32,
+    "pairs_per_cycle": 32,
+    "vector_width": 128,
+    "qkt_tok_parallel": 2,
+    "qkt_dot_parallel": 8,
+    "pv_dim_parallel": 8,
+    "attention_parallel_heads": 32,
+    "stage_overlap": true,
+    "bank_io_bits": 128,
+    "acc_w_bits": 48,
+    "fp16_w_bits": 16,
+    "data_w_bits": 16,
+    "launch_gap_cycles": 4,
+    "drain_cycles": 16,
+    "cpipe_qkv_cycles": 8,
+    "lut_pair_gen_per_cycle": 1,
+    "max_active_banks": 32,
+    "tp_parallel": 2
+  },
+  "ramulator": {
+    "impl": "DDR5-BITACC",
+    "org": "auto",
+    "dq_bits": 8,
+    "timing": "DDR5_3200AN",
+    "chips_per_dimm": 8,
+    "channel_width": null,
+    "channel": 1,
+    "rank": 1,
+    "tck_ns": 0.625,
+    "internal_prefetch_size": 16,
+    "nBL": 8
+  }
+}
