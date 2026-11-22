@@ -37,7 +37,6 @@
   "bitacc_area_ref_input_dim": 2048,
   "bitacc_area_ref_banks": 32,
   "bitacc_area_ref_n_tile": 1,
-  "bitacc_area_ref_pairs_per_rd": 256,
   "bitacc_area_ref_max_kv_cache_tokens": 1024,
   "bitacc_area_ref_tok_par": 2,
   "bitacc_area_bank_level_ref_um2": 288356.642067,
