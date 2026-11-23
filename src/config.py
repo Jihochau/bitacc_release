@@ -181,12 +181,6 @@ def _load_pim_config(raw: dict[str, Any] | None = None) -> PIMConfig:
         dram_share_pim=float(raw.get("dram_share_pim", raw.get("DRAM_SHARE_PIM", 0.5))),
         power_constraint=bool(raw.get("power_constraint", raw.get("POWER_CONSTRAINT", False))),
         static_power_mw=float(static_power_mw),
-        dram_activation_precharge_pj_per_bit=float(
-            raw.get("dram_activation_precharge_pj_per_bit", 0.11)
-        ),
-        dram_cell_rw_pj_per_bit=float(raw.get("dram_cell_rw_pj_per_bit", 0.44)),
-        module_transfer_pj_per_bit=float(raw.get("module_transfer_pj_per_bit", 2.54)),
-        external_transfer_pj_per_bit=float(raw.get("external_transfer_pj_per_bit", 0.30)),
         logic_energy_pj_per_operation=logic_energy,
         include_placeholder_static_power=bool(raw.get("include_placeholder_static_power", False)),
         include_static_power=bool(

@@ -1,5 +1,5 @@
 {
-  "_note": "Constants of the energy model in scripts/experiments/energy.py that are not simulator inputs. The per-event energy coefficients of the DRAM array, the transfers, the PE operations and the DIMM-level buffers are the *_pj_per_* keys of config/pim/bitacc_runtime_default.json.",
+  "_note": "Constants of the energy model in scripts/experiments/energy.py that are not simulator inputs. The DRAM energies (row cycles, array accesses, transfers, refresh, background) are derived from the DDR5 device currents below; the energy coefficients of the PE operations and the DIMM-level buffers are the *_pj_per_* keys of config/pim/bitacc_runtime_default.json.",
   "host": {
     "active_power_w": 65,
     "idle_power_w": 10,
@@ -16,15 +16,28 @@
     "vdd_v": 1.1,
     "vpp_v": 1.8,
     "vddq_v": 1.1,
+    "idd0_ma": 53,
+    "ipp0_ma": 9,
     "idd2n_ma": 49,
     "ipp2n_ma": 7,
     "iddq2n_ma": 73,
     "idd3n_ma": 91,
     "ipp3n_ma": 8,
     "iddq3n_ma": 70,
+    "idd4r_ma": 218,
+    "ipp4r_ma": 10,
+    "iddq4r_ma": 218,
+    "idd4w_ma": 241,
+    "ipp4w_ma": 23,
+    "iddq4w_ma": 271,
     "idd5b_ma": 377,
     "ipp5b_ma": 33,
     "iddq5b_ma": 76,
-    "source": "Maximum supply currents of one Micron 16-Gb DDR5 SDRAM die revision D, x8, DDR5-5600 speed grade (data sheet current specifications: precharge standby IDD2N/IPP2N/IDDQ2N, active standby IDD3N/IPP3N/IDDQ3N, all-bank refresh IDD5B/IPP5B/IDDQ5B). The same device is used for every model configuration, although the simulated organizations are 8-Gb to 32-Gb DDR5-3200 devices."
+    "data_rate_mtps": 5600,
+    "dq_bits": 8,
+    "page_bytes": 1024,
+    "t_ras_ns": 32,
+    "t_rp_ns": 16,
+    "source": "Micron, 16Gb DDR5 SDRAM Addendum MT60B4G4/MT60B2G8/MT60B1G16 Die Revision D (16gb_ddr5_sdram_dierevD.pdf, Rev. F 04/2024). Currents: maximum limits of Table 8 (DDR5 IDD, IPP, IDDQ Current Limits) for the x8 device at DDR5-5600: one-bank activate-precharge IDD0/IPP0, precharge standby IDD2N/IPP2N/IDDQ2N, active standby IDD3N/IPP3N/IDDQ3N, burst read IDD4R/IPP4R/IDDQ4R, burst write IDD4W/IPP4W/IDDQ4W, all-bank refresh IDD5B/IPP5B/IDDQ5B. Voltages: VDD = VDDQ = 1.1 V, VPP = 1.8 V (nominal, Features). page_bytes: 1KB page of the x8 device (Table 1, 16Gb Addressing). t_rp_ns: tRP = 16.000 ns of the DDR5-5600 (46-45-45) part (Table 2). t_ras_ns: tRAS(min) = 32 ns of the DDR5 speed bins, so that tRC = tRAS + tRP = 48 ns. The same device is used for every model configuration, although the simulated organizations are 8-Gb to 32-Gb DDR5-3200 devices."
   }
 }

@@ -101,10 +101,6 @@ class PIMConfig:
     dram_share_pim: float
     power_constraint: bool
     static_power_mw: float
-    dram_activation_precharge_pj_per_bit: float = 0.11
-    dram_cell_rw_pj_per_bit: float = 0.44
-    module_transfer_pj_per_bit: float = 2.54
-    external_transfer_pj_per_bit: float = 0.30
     logic_energy_pj_per_operation: float = 0.32
     include_placeholder_static_power: bool = False
     include_static_power: bool = False

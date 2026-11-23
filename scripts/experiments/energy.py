@@ -21,6 +21,20 @@ counts follow from the per-command terms of the trace generator (``phase_report`
 constants are listed, with their sources, in ``config/energy.json`` and below.  The model
 is an analytical estimate with assumed host powers, not a measurement.
 
+All DRAM energies follow from the maximum supply currents of one 16-Gb DDR5-5600 x8 device
+(``ddr5_device`` in ``config/energy.json``), see :func:`dram_energies`:
+
+* a row cycle (activate + precharge of one bank) costs the one-bank activate-precharge
+  current above precharge standby, (IDD0 - IDD2N) and (IPP0 - IPP2N), for tRC = tRAS + tRP;
+* a bit read from or written to the array costs the burst read or write current above
+  active standby, (IDD4R - IDD3N) and (IPP4R - IPP3N), or (IDD4W - IDD3N) and
+  (IPP4W - IPP3N), for one bit time of the device's data pins.  These currents include the
+  chip's global datapath, so they overestimate an access of a bank-level PE to its own bank;
+* a bit that crosses the chip's data pins additionally costs the I/O current above active
+  standby, (IDDQ4R - IDDQ3N) or (IDDQ4W - IDDQ3N).  A bit moved from the chips to the
+  DIMM-level PE costs a read plus the read I/O, a bit moved from the DIMM-level PE to the chips
+  a write plus the write I/O, and a bit moved from the host to the DIMM the write I/O.
+
 The comparison uses the published energy per token of BitNet.cpp on an Apple M2 Ultra
 (``baselines/bitnet_cpp_energy_m2_ultra.csv``), which exists for three configurations.
 """
@@ -51,14 +65,10 @@ RUNTIME_CONFIG_PATH = sweeplib.ROOT / "config" / "pim" / "bitacc_runtime_default
 BASELINE_PATH = sweeplib.BASELINES_DIR / "bitnet_cpp_energy_m2_ultra.csv"
 SIMULATOR_CONFIG_NAME = "trace_out.yaml"
 
-# Per-event energy coefficients, read from RUNTIME_CONFIG_PATH.  They are the coefficients
-# of the AttAcc simulator (Park et al., ASPLOS 2024, github.com/scale-snu/attacc_simulator),
-# whose DRAM terms come from Fine-Grained DRAM (O'Connor et al., MICRO 2017):
-ROW_CYCLE_PJ_PER_BIT = "dram_activation_precharge_pj_per_bit"  # activate + precharge of a row
-ARRAY_ACCESS_PJ_PER_BIT = "dram_cell_rw_pj_per_bit"  # read/write between array and bank PE
-# 1.01 (column to bank group) + 1.23 (bank group to global I/O) + 0.30 (off-die wiring):
-MODULE_TRANSFER_PJ_PER_BIT = "module_transfer_pj_per_bit"
-HOST_TRANSFER_PJ_PER_BIT = "external_transfer_pj_per_bit"  # off-die wiring only
+# Per-event energy coefficients of the PEs, read from RUNTIME_CONFIG_PATH.  They are the
+# coefficients of the AttAcc simulator (Park et al., ASPLOS 2024,
+# github.com/scale-snu/attacc_simulator).  The DRAM energies are derived from the DDR5
+# device currents of CONSTANTS_PATH instead (dram_energies).
 PROJECTION_PJ_PER_OPERATION = "bitlinear_energy_pj_per_operation"
 ATTENTION_PJ_PER_OPERATION = "attention_mac_energy_pj_per_operation"
 TABLE_PJ_PER_OPERATION = "lut_generation_energy_pj_per_operation"
@@ -71,7 +81,11 @@ PRECHARGE_COMMANDS = ("PRE", "PREA", "PRESB", "PREPB")
 ALL_BANK_ROW_COMMANDS = ("ACTAB", "PREA")
 REFRESH_COMMAND = "REFab"
 UNMODELED_COMMANDS = ("REFsb",)  # no same-bank refresh current in config/energy.json
-MODULE_TRANSFER_COMMANDS = ("QKT_XFER", "POST_SCORE_BCAST", "PV_XFER", "LINEAR_XFER")
+# Transfers between the chips and the DIMM-level PE: results the chips send to the DIMM-level
+# PE (read direction) and scores the DIMM-level PE broadcasts to the chips (write direction).
+# The tables of ALL_BANK_LUT_LOAD are also sent to the chips.
+MODULE_READ_COMMANDS = ("QKT_XFER", "PV_XFER", "LINEAR_XFER")
+MODULE_WRITE_COMMANDS = ("POST_SCORE_BCAST",)
 KV_WRITE_COMMANDS = ("ALL_BANK_WR_K_CURRENT", "ALL_BANK_WR_V_CURRENT")
 ATTENTION_COMMANDS = ("ALL_BANK_QKT", "ALL_BANK_PV")
 HOST_CYCLE_FIELDS = (
@@ -118,9 +132,11 @@ SENSITIVITY_COLUMNS = (
 class Activity:
     """Bytes moved and operations executed during one decoded token."""
 
-    array_bytes: int
-    module_transfer_bytes: int
-    host_transfer_bytes: int
+    array_read_bytes: int
+    array_write_bytes: int
+    module_read_bytes: int  # from the chips to the DIMM-level PE
+    module_write_bytes: int  # from the DIMM-level PE to the chips
+    host_transfer_bytes: int  # from the host to the DIMM
     projection_operations: int
     attention_operations: int
     table_operations: int
@@ -142,13 +158,9 @@ def load_constants() -> dict[str, Any]:
 
 
 def load_coefficients() -> dict[str, float]:
-    """Per-event energy coefficients (pJ) of the runtime configuration."""
+    """Per-event energy coefficients (pJ) of the PEs in the runtime configuration."""
     runtime = json.loads(RUNTIME_CONFIG_PATH.read_text(encoding="utf-8"))
     names = (
-        ROW_CYCLE_PJ_PER_BIT,
-        ARRAY_ACCESS_PJ_PER_BIT,
-        MODULE_TRANSFER_PJ_PER_BIT,
-        HOST_TRANSFER_PJ_PER_BIT,
         PROJECTION_PJ_PER_OPERATION,
         ATTENTION_PJ_PER_OPERATION,
         TABLE_PJ_PER_OPERATION,
@@ -156,6 +168,42 @@ def load_coefficients() -> dict[str, float]:
         BUFFER_WRITE_PJ_PER_BYTE,
     )
     return {name: float(runtime[name]) for name in names}
+
+
+def dram_energies(device: Mapping[str, Any]) -> dict[str, float]:
+    """DRAM energies (pJ) derived from the supply currents of one DDR5 device.
+
+    Currents (mA) times voltages (V) are powers (mW); a power times a time (ns) is an energy
+    (pJ).  Every dynamic current is taken above the standby current of the same test: above
+    precharge standby for the one-bank activate-precharge test (IDD0), and above active
+    standby for the burst tests (IDD4R, IDD4W), which keep the banks open.
+    """
+    vdd, vpp, vddq = device["vdd_v"], device["vpp_v"], device["vddq_v"]
+    bit_ns = 1e3 / (device["data_rate_mtps"] * device["dq_bits"])  # one bit on the data pins
+    row_cycle_ns = device["t_ras_ns"] + device["t_rp_ns"]  # tRC
+    row_cycle_pj = row_cycle_ns * (
+        vdd * (device["idd0_ma"] - device["idd2n_ma"])
+        + vpp * (device["ipp0_ma"] - device["ipp2n_ma"])
+    )
+    energies = {
+        "row_cycle_pj_per_bit": row_cycle_pj / (8 * device["page_bytes"]),
+        "array_read_pj_per_bit": bit_ns
+        * (
+            vdd * (device["idd4r_ma"] - device["idd3n_ma"])
+            + vpp * (device["ipp4r_ma"] - device["ipp3n_ma"])
+        ),
+        "array_write_pj_per_bit": bit_ns
+        * (
+            vdd * (device["idd4w_ma"] - device["idd3n_ma"])
+            + vpp * (device["ipp4w_ma"] - device["ipp3n_ma"])
+        ),
+        "io_read_pj_per_bit": bit_ns * vddq * (device["iddq4r_ma"] - device["iddq3n_ma"]),
+        "io_write_pj_per_bit": bit_ns * vddq * (device["iddq4w_ma"] - device["iddq3n_ma"]),
+    }
+    negative = [name for name, value in energies.items() if value <= 0.0]
+    if negative:
+        raise ValueError(f"non-positive DRAM energies {negative}: check config/energy.json")
+    return energies
 
 
 def load_bitnet_cpp_energy() -> dict[str, float]:
@@ -195,24 +243,29 @@ def activity(summary: Mapping[str, Any]) -> Activity:
             if name == "ALL_BANK_BITLINEAR":
                 weight_bytes = count * terms["active_banks"] * chips * terms["array_access_bytes"]
                 operations = weight_bytes * 8 // weight_bits
-                totals["array_bytes"] += weight_bytes
+                totals["array_read_bytes"] += weight_bytes
                 totals["projection_operations"] += operations
                 # One table entry of activation width is read per pair of ternary weights.
                 totals["buffer_read_bytes"] += (operations + 1) // 2 * activation_bytes
             elif name == "ALL_BANK_RD_K_V_CACHE" or name in KV_WRITE_COMMANDS:
-                totals["array_bytes"] += (
+                direction = "array_write_bytes" if name in KV_WRITE_COMMANDS else "array_read_bytes"
+                totals[direction] += (
                     count * terms["active_banks"] * chips * terms["array_access_bytes"]
                 )
             elif name == "ALL_BANK_LUT_LOAD":
                 elements = terms["lut_pairs"] * terms["lut_elements_per_pair"]
                 tile_bytes = -(-elements * terms["lut_entry_bits"] // 8)
-                totals["module_transfer_bytes"] += (
+                totals["module_write_bytes"] += (
                     count * terms["lut_xfer_clocks"] * transfer_bytes_per_clock
                 )
                 totals["table_operations"] += count * elements
                 totals["buffer_write_bytes"] += count * tile_bytes * terms["active_banks"] * chips
-            elif name in MODULE_TRANSFER_COMMANDS:
-                totals["module_transfer_bytes"] += (
+            elif name in MODULE_READ_COMMANDS:
+                totals["module_read_bytes"] += (
+                    count * terms["transfer_clocks"] * transfer_bytes_per_clock
+                )
+            elif name in MODULE_WRITE_COMMANDS:
+                totals["module_write_bytes"] += (
                     count * terms["transfer_clocks"] * transfer_bytes_per_clock
                 )
             elif name == "HOST_XFER":
@@ -258,16 +311,22 @@ def energy_components(
         raise ValueError(f"{result['case_id']}: no energy model for the commands {unmodeled}")
 
     work = activity(summary)
-    row_cycle_pj = int(runtime["bank_row_bytes"]) * 8 * coefficients[ROW_CYCLE_PJ_PER_BIT]
+    device, host, leakage = constants["ddr5_device"], constants["host"], constants["pe_leakage"]
+    dram = dram_energies(device)
+    row_cycle_pj = int(runtime["bank_row_bytes"]) * 8 * dram["row_cycle_pj_per_bit"]
     # A row cycle is charged in two halves, to the activation and to the precharge.
     row_pj = (
         row_events(counts, ACTIVATE_COMMANDS, banks, chips)
         + row_events(counts, PRECHARGE_COMMANDS, banks, chips)
     ) * (row_cycle_pj / 2.0)
-    array_pj = work.array_bytes * 8 * coefficients[ARRAY_ACCESS_PJ_PER_BIT]
-    transfer_pj = (
-        work.module_transfer_bytes * 8 * coefficients[MODULE_TRANSFER_PJ_PER_BIT]
-        + work.host_transfer_bytes * 8 * coefficients[HOST_TRANSFER_PJ_PER_BIT]
+    array_pj = 8 * (
+        work.array_read_bytes * dram["array_read_pj_per_bit"]
+        + work.array_write_bytes * dram["array_write_pj_per_bit"]
+    )
+    transfer_pj = 8 * (
+        work.module_read_bytes * (dram["array_read_pj_per_bit"] + dram["io_read_pj_per_bit"])
+        + work.module_write_bytes * (dram["array_write_pj_per_bit"] + dram["io_write_pj_per_bit"])
+        + work.host_transfer_bytes * dram["io_write_pj_per_bit"]
     )
     logic_pj = (
         work.projection_operations * coefficients[PROJECTION_PJ_PER_OPERATION]
@@ -279,7 +338,6 @@ def energy_components(
         + work.buffer_write_bytes * coefficients[BUFFER_WRITE_PJ_PER_BYTE]
     )
 
-    device, host, leakage = constants["ddr5_device"], constants["host"], constants["pe_leakage"]
     refresh_w = 1e-3 * (  # per chip, above active standby
         device["vdd_v"] * (device["idd5b_ma"] - device["idd3n_ma"])
         + device["vpp_v"] * (device["ipp5b_ma"] - device["ipp3n_ma"])
